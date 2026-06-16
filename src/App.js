@@ -7,14 +7,29 @@ const COLORS = {
   text: "#F0EFF5", muted: "#7E85B0", inputBg: "#0F1128",
 };
 const CARD_COLORS = ["#7C5CFC","#FF4D6A","#00D68F","#F59E0B","#3B82F6","#EC4899","#14B8A6"];
+const BANKS = {
+  "Chase":            { url: "https://www.chase.com/digital/login-page", color: "#117ACA" },
+  "Bank of America":  { url: "https://www.bankofamerica.com/credit-cards/", color: "#E31837" },
+  "Citi":             { url: "https://online.citi.com/US/login.do", color: "#003B70" },
+  "Wells Fargo":      { url: "https://connect.secure.wellsfargo.com/auth/login/present", color: "#D71E28" },
+  "American Express": { url: "https://www.americanexpress.com/en-us/account/login", color: "#007BC1" },
+  "Discover":         { url: "https://portal.discover.com/customersite/login", color: "#FF6600" },
+  "Capital One":      { url: "https://myaccount.capitalone.com/consumer/signin", color: "#D03027" },
+  "Apple Card":       { url: "https://wallet.apple.com/", color: "#555555" },
+  "US Bank":          { url: "https://onlinebanking.usbank.com/auth/login/personal", color: "#0A2F6B" },
+  "Barclays":         { url: "https://www.barclaysus.com/all-products/credit-cards/login.html", color: "#00AEEF" },
+  "Other":            { url: null, color: "#7E85B0" },
+};
+const BANK_NAMES = Object.keys(BANKS);
+
 const DEMO_CARDS = [
-  { id:1, name:"Chase Sapphire",   balance:4200, limit:10000, apr:24.99, minPayment:85, color:CARD_COLORS[0], due:"Jun 22" },
-  { id:2, name:"Amex Gold",        balance:1850, limit:5000,  apr:19.49, minPayment:37, color:CARD_COLORS[1], due:"Jun 28" },
-  { id:3, name:"Citi Double Cash", balance:3100, limit:8000,  apr:22.24, minPayment:62, color:CARD_COLORS[2], due:"Jul 5"  },
+  { id:1, name:"Chase Sapphire",   balance:4200, limit:10000, apr:24.99, minPayment:85, color:CARD_COLORS[0], due:"Jun 22", bank:"Chase" },
+  { id:2, name:"Amex Gold",        balance:1850, limit:5000,  apr:19.49, minPayment:37, color:CARD_COLORS[1], due:"Jun 28", bank:"American Express" },
+  { id:3, name:"Citi Double Cash", balance:3100, limit:8000,  apr:22.24, minPayment:62, color:CARD_COLORS[2], due:"Jul 5",  bank:"Citi" },
 ];
 
 // ── Math helpers ──────────────────────────────────────────────────────────────
-function fmt(n)     { return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2}).format(n); }
+function fmt(n)     { return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(n); }
 function fmtX(n)    { return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2}).format(n); }
 function fmtPct(n)  { return `${parseFloat(n).toFixed(2)}%`; }
 function moInt(bal,apr) { return bal*(apr/100/12); }
@@ -107,10 +122,17 @@ function CardTile({card,onEdit,onDelete}){
           </div>
         ))}
       </div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
         <span style={{fontSize:12,color:COLORS.muted}}>Min: <strong style={{color:COLORS.text}}>{fmtX(effMin)}</strong>/mo</span>
         <PayoffBadge balance={card.balance} apr={card.apr} minPayment={effMin}/>
       </div>
+      {card.bank&&BANKS[card.bank]?.url&&(
+        <a href={BANKS[card.bank].url} target="_blank" rel="noopener noreferrer" style={{display:"block",textAlign:"center",padding:"10px",borderRadius:12,background:COLORS.accent+"22",border:`1px solid ${COLORS.accent}`,color:COLORS.accent,fontSize:13,fontWeight:700,textDecoration:"none",transition:"background 0.2s"}}
+          onMouseEnter={e=>e.currentTarget.style.background=COLORS.accent+"44"}
+          onMouseLeave={e=>e.currentTarget.style.background=COLORS.accent+"22"}>
+          💳 Make Payment → {card.bank}
+        </a>
+      )}
     </div>
   );
 }
@@ -128,7 +150,7 @@ function FieldInput({label,field,form,errors,set,type,placeholder}){
   );
 }
 function Modal({card,onSave,onClose,nextColor}){
-  const [form,setForm]=useState(card?{...card,balance:String(card.balance),limit:String(card.limit),apr:String(card.apr),minPayment:String(card.minPayment)}:{name:"",balance:"",limit:"",apr:"",minPayment:"",due:"",color:nextColor});
+  const [form,setForm]=useState(card?{...card,balance:String(card.balance),limit:String(card.limit),apr:String(card.apr),minPayment:String(card.minPayment),bank:card.bank||""}:{name:"",balance:"",limit:"",apr:"",minPayment:"",due:"",bank:"",color:nextColor});
   const [errors,setErrors]=useState({});
   const set=(k,v)=>{setForm(f=>({...f,[k]:v}));setErrors(e=>({...e,[k]:undefined}));};
   const handleSave=()=>{ const errs=validate(form); if(Object.keys(errs).length){setErrors(errs);return;} onSave({...form,id:form.id||Date.now(),balance:parseFloat(form.balance),limit:parseFloat(form.limit),apr:parseFloat(form.apr),minPayment:form.minPayment!==""?parseFloat(form.minPayment):0}); };
@@ -147,6 +169,13 @@ function Modal({card,onSave,onClose,nextColor}){
             {suggested&&<button onClick={()=>set("minPayment",suggested.toFixed(2))} style={{marginTop:5,fontSize:11,color:COLORS.accent,background:"none",border:"none",cursor:"pointer",padding:0}}>Use suggested: {fmtX(suggested)}</button>}
           </div>
           <FieldInput label="Due Date" field="due" form={form} errors={errors} set={set} placeholder="Jun 22"/>
+          <div style={{gridColumn:"1 / -1"}}>
+            <label style={{fontSize:11,color:COLORS.muted,display:"block",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.05em",fontWeight:600}}>Bank / Issuer</label>
+            <select value={form.bank||""} onChange={e=>set("bank",e.target.value)} style={{width:"100%",background:COLORS.inputBg,border:`1px solid ${COLORS.border}`,borderRadius:10,padding:"10px 14px",color:form.bank?COLORS.text:COLORS.muted,fontSize:14,outline:"none",boxSizing:"border-box"}}>
+              <option value="">Select your bank...</option>
+              {BANK_NAMES.map(b=><option key={b} value={b}>{b}</option>)}
+            </select>
+          </div>
         </div>
         <div style={{marginTop:16,marginBottom:22}}>
           <div style={{fontSize:11,color:COLORS.muted,marginBottom:8,textTransform:"uppercase",letterSpacing:"0.05em",fontWeight:600}}>Card Color</div>
