@@ -29,7 +29,7 @@ const DEMO_CARDS = [
 ];
 
 // ── Math helpers ──────────────────────────────────────────────────────────────
-function fmt(n)     { return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(n); }
+function fmt(n)     { return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2}).format(n); }
 function fmtX(n)    { return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2}).format(n); }
 function fmtPct(n)  { return `${parseFloat(n).toFixed(2)}%`; }
 function moInt(bal,apr) { return bal*(apr/100/12); }
