@@ -130,7 +130,7 @@ function CardTile({card,onEdit,onDelete}){
         <a href={BANKS[card.bank].url} target="_blank" rel="noopener noreferrer" style={{display:"block",textAlign:"center",padding:"10px",borderRadius:12,background:COLORS.accent+"22",border:`1px solid ${COLORS.accent}`,color:COLORS.accent,fontSize:13,fontWeight:700,textDecoration:"none",transition:"background 0.2s"}}
           onMouseEnter={e=>e.currentTarget.style.background=COLORS.accent+"44"}
           onMouseLeave={e=>e.currentTarget.style.background=COLORS.accent+"22"}>
-          💳 Make Payment → {card.bank}
+          Make Payment → {card.bank}
         </a>
       )}
     </div>
